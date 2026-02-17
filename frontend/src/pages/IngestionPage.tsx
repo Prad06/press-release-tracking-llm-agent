@@ -190,195 +190,212 @@ export function IngestionPage() {
           </Alert>
         )}
 
-        <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
-          <Paper
-            elevation={0}
+        <Paper
+          elevation={0}
+          sx={{
+            p: 2.5,
+            border: "1px solid",
+            borderColor: "divider",
+            bgcolor: "background.paper",
+          }}
+        >
+          <Box
             sx={{
-              flex: 1,
-              minWidth: 320,
-              p: 2.5,
-              border: "1px solid",
-              borderColor: "divider",
-              bgcolor: "background.paper",
+              display: "grid",
+              gridTemplateColumns: { xs: "1fr", md: "1fr auto 1fr" },
+              gap: 2,
+              alignItems: "stretch",
             }}
           >
-            <Typography
-              variant="subtitle1"
-              sx={{ fontWeight: 600, mb: 2, color: "primary.main" }}
-            >
-              Company
-            </Typography>
-            <Box
-              component="form"
-              onSubmit={addCompany}
-              sx={{ display: "flex", flexDirection: "column", gap: 2 }}
-            >
-              <TextField
-                label="Ticker"
-                size="small"
-                value={company.ticker}
-                onChange={(e) =>
-                  setCompany((c) => ({ ...c, ticker: e.target.value }))
-                }
-                required
-                fullWidth
-              />
-              <TextField
-                label="Name"
-                size="small"
-                value={company.name}
-                onChange={(e) =>
-                  setCompany((c) => ({ ...c, name: e.target.value }))
-                }
-                required
-                fullWidth
-              />
-              <TextField
-                label="Sector (optional)"
-                size="small"
-                value={company.sector}
-                onChange={(e) =>
-                  setCompany((c) => ({ ...c, sector: e.target.value }))
-                }
-                fullWidth
-              />
-              <Box sx={{ height: 56 }} aria-hidden />
+            {/* Company panel */}
+            <Box sx={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
+              <Typography
+                variant="subtitle1"
+                sx={{ fontWeight: 600, mb: 2, color: "primary.main" }}
+              >
+                Company
+              </Typography>
+              <Box
+                component="form"
+                onSubmit={addCompany}
+                sx={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 2,
+                  flex: 1,
+                  minHeight: 280,
+                }}
+              >
+                <TextField
+                  label="Ticker"
+                  size="small"
+                  value={company.ticker}
+                  onChange={(e) =>
+                    setCompany((c) => ({ ...c, ticker: e.target.value }))
+                  }
+                  required
+                  fullWidth
+                />
+                <TextField
+                  label="Name"
+                  size="small"
+                  value={company.name}
+                  onChange={(e) =>
+                    setCompany((c) => ({ ...c, name: e.target.value }))
+                  }
+                  required
+                  fullWidth
+                />
+                <TextField
+                  label="Sector (optional)"
+                  size="small"
+                  value={company.sector}
+                  onChange={(e) =>
+                    setCompany((c) => ({ ...c, sector: e.target.value }))
+                  }
+                  fullWidth
+                />
+                <Box sx={{ flex: 1 }} aria-hidden />
+                <Button
+                  type="submit"
+                  variant="contained"
+                  disabled={loading}
+                  fullWidth
+                >
+                  Add
+                </Button>
+              </Box>
+              <Divider sx={{ my: 2 }} />
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                display="block"
+                sx={{ mb: 1 }}
+              >
+                CSV: ticker, name, sector
+              </Typography>
               <Button
-                type="submit"
-                variant="contained"
+                variant="outlined"
+                component="label"
                 disabled={loading}
                 fullWidth
               >
-                Add
+                Upload CSV
+                <input
+                  type="file"
+                  accept=".csv"
+                  hidden
+                  onChange={addCompanyBulk}
+                />
               </Button>
             </Box>
-            <Divider sx={{ my: 2 }} />
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              display="block"
-              sx={{ mb: 1 }}
-            >
-              CSV: ticker, name, sector
-            </Typography>
-            <Button
-              variant="outlined"
-              component="label"
-              disabled={loading}
-              fullWidth
-            >
-              Upload CSV
-              <input
-                type="file"
-                accept=".csv"
-                hidden
-                onChange={addCompanyBulk}
-              />
-            </Button>
-          </Paper>
 
-          <Divider
-            orientation="vertical"
-            flexItem
-            sx={{ borderColor: "primary.light", opacity: 0.5 }}
-          />
-
-          <Paper
-            elevation={0}
-            sx={{
-              flex: 1,
-              minWidth: 320,
-              p: 2.5,
-              border: "1px solid",
-              borderColor: "divider",
-              bgcolor: "background.paper",
-            }}
-          >
-            <Typography
-              variant="subtitle1"
-              sx={{ fontWeight: 600, mb: 2, color: "primary.main" }}
-            >
-              Press Release
-            </Typography>
             <Box
-              component="form"
-              onSubmit={addPressRelease}
-              sx={{ display: "flex", flexDirection: "column", gap: 2 }}
-            >
-              <TextField
-                label="URL"
-                type="url"
-                size="small"
-                value={pr.url}
-                onChange={(e) => setPr((p) => ({ ...p, url: e.target.value }))}
-                required
-                fullWidth
-              />
-              <TextField
-                label="Ticker"
-                size="small"
-                value={pr.ticker}
-                onChange={(e) =>
-                  setPr((p) => ({ ...p, ticker: e.target.value }))
-                }
-                required
-                fullWidth
-              />
-              <TextField
-                label="Title"
-                size="small"
-                value={pr.title}
-                onChange={(e) =>
-                  setPr((p) => ({ ...p, title: e.target.value }))
-                }
-                required
-                fullWidth
-              />
-              <TextField
-                label="Date (ISO required)"
-                size="small"
-                value={pr.press_ts}
-                onChange={(e) =>
-                  setPr((p) => ({ ...p, press_ts: e.target.value }))
-                }
-                required
-                fullWidth
-                placeholder="2026-01-11T17:00:00-05:00"
-              />
+              sx={{
+                display: { xs: "none", md: "block" },
+                width: 0,
+                borderLeft: "1px dashed",
+                borderColor: "divider",
+              }}
+            />
+
+            {/* Press Release panel */}
+            <Box sx={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
+              <Typography
+                variant="subtitle1"
+                sx={{ fontWeight: 600, mb: 2, color: "primary.main" }}
+              >
+                Press Release
+              </Typography>
+              <Box
+                component="form"
+                onSubmit={addPressRelease}
+                sx={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 2,
+                  flex: 1,
+                  minHeight: 280,
+                }}
+              >
+                <TextField
+                  label="URL"
+                  type="url"
+                  size="small"
+                  value={pr.url}
+                  onChange={(e) =>
+                    setPr((p) => ({ ...p, url: e.target.value }))
+                  }
+                  required
+                  fullWidth
+                />
+                <TextField
+                  label="Ticker"
+                  size="small"
+                  value={pr.ticker}
+                  onChange={(e) =>
+                    setPr((p) => ({ ...p, ticker: e.target.value }))
+                  }
+                  required
+                  fullWidth
+                />
+                <TextField
+                  label="Title"
+                  size="small"
+                  value={pr.title}
+                  onChange={(e) =>
+                    setPr((p) => ({ ...p, title: e.target.value }))
+                  }
+                  required
+                  fullWidth
+                />
+                <TextField
+                  label="Date (ISO required)"
+                  size="small"
+                  value={pr.press_ts}
+                  onChange={(e) =>
+                    setPr((p) => ({ ...p, press_ts: e.target.value }))
+                  }
+                  required
+                  fullWidth
+                  placeholder="2026-01-11T17:00:00-05:00"
+                />
+                <Box sx={{ flex: 1 }} aria-hidden />
+                <Button
+                  type="submit"
+                  variant="contained"
+                  disabled={loading}
+                  fullWidth
+                >
+                  Add
+                </Button>
+              </Box>
+              <Divider sx={{ my: 2 }} />
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                display="block"
+                sx={{ mb: 1 }}
+              >
+                CSV: url, ticker, title, date
+              </Typography>
               <Button
-                type="submit"
-                variant="contained"
+                variant="outlined"
+                component="label"
                 disabled={loading}
                 fullWidth
               >
-                Add
+                Upload CSV
+                <input
+                  type="file"
+                  accept=".csv"
+                  hidden
+                  onChange={addPressReleaseBulk}
+                />
               </Button>
             </Box>
-            <Divider sx={{ my: 2 }} />
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              display="block"
-              sx={{ mb: 1 }}
-            >
-              CSV: url, ticker, title, date
-            </Typography>
-            <Button
-              variant="outlined"
-              component="label"
-              disabled={loading}
-              fullWidth
-            >
-              Upload CSV
-              <input
-                type="file"
-                accept=".csv"
-                hidden
-                onChange={addPressReleaseBulk}
-              />
-            </Button>
-          </Paper>
-        </Box>
+          </Box>
+        </Paper>
       </Box>
     </Box>
   );
