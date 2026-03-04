@@ -58,7 +58,7 @@ class MongoStore:
                 d["_id"] = str(d["_id"])
         return docs
 
-    def get_by_id(self, id: str):
+    def get_by_id(self, id: str, projection: Optional[Dict[str, int]] = None):
         from bson import ObjectId
         try:
             oid = ObjectId(id)
@@ -66,7 +66,7 @@ class MongoStore:
             return None
         if self._client is None:
             self._client = pymongo.MongoClient(self._uri)
-        doc = self._client[self._db][COLLECTION].find_one({"_id": oid})
+        doc = self._client[self._db][COLLECTION].find_one({"_id": oid}, projection)
         if doc and "_id" in doc:
             doc["_id"] = str(doc["_id"])
         return doc

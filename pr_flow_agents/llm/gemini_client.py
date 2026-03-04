@@ -24,7 +24,7 @@ class GeminiClient:
             raise RuntimeError("GEMINI_API_KEY is not set")
         self._client = genai.Client(api_key=key)
 
-    def generate_text(self, prompt: str, model: str = "gemini-2.0-flash") -> str:
+    def generate_text(self, prompt: str, model: str = "gemini-2.5-flash") -> str:
         logger.debug(
             "gemini_generate_text_start model=%s prompt_chars=%s",
             model,
@@ -46,7 +46,7 @@ class GeminiClient:
     def generate_json(
         self,
         prompt: str,
-        model: str = "gemini-2.0-flash",
+        model: str = "gemini-2.5-flash",
         retries: int = 2,
     ) -> Any:
         """Generate strict JSON with small retry loop."""
@@ -77,8 +77,8 @@ class GeminiClient:
 
 def _strip_json_fences(text: str) -> str:
     if text.startswith("```"):
-        text = re.sub(r"^```(?:json)?\\s*", "", text)
-        text = re.sub(r"\\s*```$", "", text)
+        text = re.sub(r"^```(?:json)?\s*", "", text)
+        text = re.sub(r"\s*```$", "", text)
     return text.strip()
 
 
@@ -92,9 +92,9 @@ def _client() -> GeminiClient:
     return _default_client
 
 
-def generate_text(prompt: str, model: str = "gemini-2.0-flash") -> str:
+def generate_text(prompt: str, model: str = "gemini-2.5-flash") -> str:
     return _client().generate_text(prompt, model=model)
 
 
-def generate_json(prompt: str, model: str = "gemini-2.0-flash", retries: int = 2) -> Any:
+def generate_json(prompt: str, model: str = "gemini-2.5-flash", retries: int = 2) -> Any:
     return _client().generate_json(prompt, model=model, retries=retries)

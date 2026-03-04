@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from contextlib import nullcontext
 import json
 import os
 from time import perf_counter
@@ -31,7 +32,7 @@ logger = get_logger(__name__)
 
 MAX_HOPS_DEFAULT = 2
 MLFLOW_EXPERIMENT_DEFAULT = "pr_flow_ingestion"
-LLM_MODEL_DEFAULT = "gemini-2.0-flash"
+LLM_MODEL_DEFAULT = "gemini-2.5-flash"
 
 SECTOR_NORMALIZATION: Dict[str, str] = {
     "biotech": "biotech",
@@ -93,6 +94,15 @@ def _mlflow_log_text(name: str, text: str) -> None:
             pass
 
 
+def _mlflow_parent_run_context(run_id: str):
+    if not _mlflow_enabled() or not run_id:
+        return nullcontext()
+    active = mlflow.active_run()
+    if active is not None and active.info.run_id == run_id:
+        return nullcontext()
+    return mlflow.start_run(run_id=run_id)
+
+
 def _ensure_ingestion_run(state: IngestionState) -> Optional[str]:
     if not _mlflow_enabled():
         return None
@@ -143,7 +153,7 @@ def _log_llm_call(
     hop_count = int(state.get("hop_count") or 0)
     artifact_prefix = f"llm/{call_slug}_{hop_count}"
 
-    with mlflow.start_run(run_id=run_id):
+    with _mlflow_parent_run_context(run_id):
         with mlflow.start_run(run_name=call_name, nested=True):
             mlflow.log_param("llm_model", LLM_MODEL_DEFAULT)
             mlflow.log_param("call_name", call_name)
@@ -175,7 +185,15 @@ def load_press_release(state: IngestionState) -> IngestionState:
             "loop_status": "ERROR",
         }
 
-    doc = MongoStore().get_by_id(press_release_id)
+    doc = MongoStore().get_by_id(
+        press_release_id,
+        projection={
+            "ticker": 1,
+            "title": 1,
+            "press_release_timestamp": 1,
+            "raw_result.markdown_content": 1,
+        },
+    )
     if not doc:
         logger.warning("load_press_release_not_found id=%s", press_release_id)
         return {
@@ -188,7 +206,7 @@ def load_press_release(state: IngestionState) -> IngestionState:
 
     ticker = str(doc.get("ticker") or "").strip().upper()
     raw = doc.get("raw_result") or {}
-    content = str(raw.get("markdown_content") or raw.get("main_content") or "")
+    content = str(raw.get("markdown_content") or "")
     ts = doc.get("press_release_timestamp")
     ts_iso = ts.isoformat() if isinstance(ts, datetime) else str(ts or "")
     mapped_doc = {
@@ -196,15 +214,12 @@ def load_press_release(state: IngestionState) -> IngestionState:
         "ticker": ticker,
         "title": str(doc.get("title") or ""),
         "press_release_timestamp": ts_iso,
-        "source_url": str(doc.get("source_url") or ""),
-        "crawl_timestamp": str(doc.get("crawl_timestamp") or ""),
-        "raw_result": raw if isinstance(raw, dict) else {},
-        "metadata": doc.get("metadata") if isinstance(doc.get("metadata"), dict) else {},
+        "raw_result": {"markdown_content": content},
     }
 
     logger.info("load_press_release_done id=%s ticker=%s content_chars=%s", press_release_id, ticker, len(content))
     if _mlflow_enabled() and run_id:
-        with mlflow.start_run(run_id=run_id):
+        with _mlflow_parent_run_context(run_id):
             mlflow.log_param("ticker", ticker)
             mlflow.log_param("press_release_timestamp", ts_iso)
             mlflow.log_metric("press_release_chars", float(len(content)))
@@ -243,7 +258,7 @@ def route_sector(state: IngestionState) -> IngestionState:
     logger.info("route_sector_done ticker=%s raw_sector=%s canonical=%s", ticker, raw_sector, canonical)
     run_id = str(state.get("mlflow_run_id") or "").strip()
     if _mlflow_enabled() and run_id:
-        with mlflow.start_run(run_id=run_id):
+        with _mlflow_parent_run_context(run_id):
             mlflow.log_param("sector_raw", raw_sector)
             mlflow.log_param("sector_route", canonical)
     return {**state, "ticker": ticker, "sector": raw_sector, "route": canonical, "error": None, "loop_status": "PENDING"}
@@ -283,7 +298,7 @@ def configure_unsupported(state: IngestionState) -> IngestionState:
 def configure_experts(state: IngestionState) -> IngestionState:
     run_id = str(state.get("mlflow_run_id") or "").strip()
     if _mlflow_enabled() and run_id:
-        with mlflow.start_run(run_id=run_id):
+        with _mlflow_parent_run_context(run_id):
             mlflow.log_param("max_hops", int(state.get("max_hops") or MAX_HOPS_DEFAULT))
             mlflow.log_param("experts", ",".join(EXPERTS))
     return {
@@ -531,7 +546,7 @@ def finalize_output(state: IngestionState) -> IngestionState:
     logger.info("finalize_output loop_status=%s final_count=%s", state.get("loop_status"), len(state.get("validated_events", [])))
     run_id = str(state.get("mlflow_run_id") or "").strip()
     if _mlflow_enabled() and run_id:
-        with mlflow.start_run(run_id=run_id):
+        with _mlflow_parent_run_context(run_id):
             mlflow.log_param("final_loop_status", str(state.get("loop_status") or ""))
             mlflow.log_metric("final_events_count", float(len(state.get("validated_events", []))))
             if state.get("error"):

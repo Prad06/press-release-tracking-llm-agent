@@ -39,7 +39,20 @@ def main() -> None:
     app = build_graph()
     out = app.invoke(state)
     logger.info("ingestion_graph_done route=%s", out.get("route"))
-    print(json.dumps(out, indent=2))
+    compact = {
+        "press_release_id": out.get("press_release_id"),
+        "ticker": out.get("ticker"),
+        "press_release_timestamp": out.get("press_release_timestamp"),
+        "route": out.get("route"),
+        "sector": out.get("sector"),
+        "loop_status": out.get("loop_status"),
+        "hop_count": out.get("hop_count"),
+        "max_hops": out.get("max_hops"),
+        "final_events_count": len(out.get("final_events", []) or []),
+        "final_events": out.get("final_events", []),
+        "error": out.get("error"),
+    }
+    print(json.dumps(compact, indent=2))
 
 
 if __name__ == "__main__":
