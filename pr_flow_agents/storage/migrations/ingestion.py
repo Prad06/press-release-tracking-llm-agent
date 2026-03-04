@@ -9,4 +9,12 @@ INDEXES = [
     ),
     ("source_url_1", [("source_url", 1)]),
     ("unprocessed_1", [("unprocessed", 1)]),
+    (
+        "claim_eligibility_1",
+        [
+            ("unprocessed", 1),
+            ("metadata.processing.status", 1),
+            ("press_release_timestamp", 1),
+        ],
+    ),
 ]

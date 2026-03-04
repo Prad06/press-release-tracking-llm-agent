@@ -5,10 +5,17 @@ Index format: (name, keys) or (name, keys, opts) e.g. opts={"unique": True}
 
 REGISTRY: dict[str, list] = {}
 
-from pr_flow_agents.storage.migrations import ingestion, companies
+from pr_flow_agents.storage.migrations import (
+    ingestion,
+    companies,
+    events,
+    company_states,
+)
 
 REGISTRY[ingestion.COLLECTION] = ingestion.INDEXES
 REGISTRY[companies.COLLECTION] = companies.INDEXES
+REGISTRY[events.COLLECTION] = events.INDEXES
+REGISTRY[company_states.COLLECTION] = company_states.INDEXES
 
 
 def run_all(uri: str, database: str) -> None:

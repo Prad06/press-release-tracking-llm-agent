@@ -18,7 +18,7 @@ ROOT = Path(__file__).resolve().parent.parent
 CHECKPOINTS_DIR = ROOT / "checkpoints"
 
 # Collections to snapshot (from migrations registry)
-COLLECTIONS = ["crawl_results", "companies"]
+COLLECTIONS = ["crawl_results", "companies", "events", "company_states"]
 
 
 def _sanitize_name(name: str) -> str:

@@ -30,6 +30,15 @@ class MongoStore:
         if self._client is None:
             self._client = pymongo.MongoClient(self._uri)
             run_collection(self._uri, self._db, COLLECTION)
+
+        # Ensure a minimal processing metadata structure so downstream code
+        # can rely on a simple 3-state status:
+        #   UNPROCESSED | SUCCESS | FAILED
+        md: Dict[str, Any] = dict(metadata or {})
+        processing = dict(md.get("processing") or {})
+        processing.setdefault("status", "UNPROCESSED")
+        md["processing"] = processing
+
         doc = StoredCrawlDocument(
             ticker=ticker,
             title=title,
@@ -37,8 +46,7 @@ class MongoStore:
             source_url=source_url,
             crawl_timestamp=raw_result.get("timestamp", datetime.now().isoformat()),
             raw_result=raw_result,
-            metadata=metadata or {},
-            unprocessed=True,
+            metadata=md,
         )
         inserted = self._client[self._db][COLLECTION].insert_one(
             doc.model_dump(mode="json")

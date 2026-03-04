@@ -38,8 +38,7 @@ class StoredCrawlDocument(BaseModel):
     )
     metadata: Dict[str, Any] = Field(
         default_factory=dict,
-        description="Optional extra fields (e.g. selection_method, score)",
+        description="Optional extra fields (e.g. selection_method, score, processing status)",
     )
-    unprocessed: bool = Field(default=True, description="Not yet processed by agents")
 
     model_config = ConfigDict(from_attributes=True)

@@ -18,6 +18,7 @@ import type { Company, PressRelease } from "../api";
 export function ReleaseSpacePage() {
   const [selected, setSelected] = useState<Company | null>(null);
   const [selectedPrId, setSelectedPrId] = useState<string | null>(null);
+  const [agentLoading] = useState(false);
 
   const { data: companies = [], isLoading: loading } = useQuery({
     queryKey: ["companies"],
@@ -40,29 +41,8 @@ export function ReleaseSpacePage() {
     setSelectedPrId(pr._id);
   };
 
-  const handleRunAllTillToday = () => {
-    // TODO: agent pipeline
-    console.log("Run all till today", selected?.ticker, selectedPr?._id);
-  };
-
-  const handleRunOnlyThis = () => {
-    // TODO: agent pipeline
-    console.log("Run only this", selectedPr?._id);
-  };
-
-  // Run all till today: enabled only when all releases before selected (by timestamp) are processed
-  const allPreviousProcessed =
-    !!selectedPr &&
-    pressReleases
-      .filter(
-        (pr) =>
-          new Date(pr.press_release_timestamp) <
-          new Date(selectedPr!.press_release_timestamp),
-      )
-      .every((pr) => !pr.unprocessed);
-  const canRunAllTillToday = !!selectedPr;
-  const canRunOnlyThis =
-    !!selectedPr && allPreviousProcessed && selectedPr.unprocessed;
+  // Agent execution is handled via CLI / API for this POC; frontend no longer
+  // exposes run controls here.
 
   return (
     <Box
@@ -227,23 +207,8 @@ export function ReleaseSpacePage() {
                   )}
                 </Box>
                 <ButtonGroup size="small" variant="outlined">
-                  <Button
-                    onClick={handleRunAllTillToday}
-                    disabled={!canRunAllTillToday}
-                    title={
-                      !allPreviousProcessed && selectedPr?.unprocessed
-                        ? "Process all earlier releases first"
-                        : ""
-                    }
-                  >
-                    Run all till today
-                  </Button>
-                  <Button
-                    onClick={handleRunOnlyThis}
-                    disabled={!canRunOnlyThis}
-                  >
-                    Run only this
-                  </Button>
+                  <Button disabled>Run all till today</Button>
+                  <Button disabled>Run only this</Button>
                 </ButtonGroup>
               </Box>
               <Typography

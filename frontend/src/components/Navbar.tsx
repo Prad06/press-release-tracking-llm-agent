@@ -4,7 +4,6 @@ import { AppBar, Button, Toolbar } from "@mui/material";
 const LINKS: { path: string; label: string }[] = [
   { path: "/ingestion", label: "Ingestion" },
   { path: "/release-space", label: "Release Space" },
-  { path: "/agent-space", label: "Agent Space" },
   { path: "/chat", label: "Chat" },
 ];
 

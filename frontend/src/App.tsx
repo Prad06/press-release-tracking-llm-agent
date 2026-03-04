@@ -15,7 +15,6 @@ export default function App() {
           <Route path="/" element={<IngestionPage />} />
           <Route path="/ingestion" element={<IngestionPage />} />
           <Route path="/release-space" element={<ReleaseSpacePage />} />
-          <Route path="/agent-space" element={<PlaceholderPage title="Agent Space" />} />
           <Route path="/chat" element={<PlaceholderPage title="Chat" />} />
         </Routes>
       </Box>

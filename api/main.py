@@ -11,7 +11,7 @@ import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
-from api.routers import companies_router, press_releases_router
+from api.routers import companies_router, press_releases_router, agents_router
 
 
 @asynccontextmanager
@@ -30,3 +30,4 @@ app.add_middleware(
 
 app.include_router(companies_router)
 app.include_router(press_releases_router)
+app.include_router(agents_router)
