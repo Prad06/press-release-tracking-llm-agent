@@ -83,6 +83,17 @@ cd frontend && npm run dev
 
 Open http://localhost:5173 (Vite dev server proxies `/api` to the backend).
 
+### 4. One-command local stack (frontend + backend + MLflow)
+
+```bash
+./scripts/start_local_stack.sh
+```
+
+This starts:
+- Frontend at `http://localhost:5173`
+- Backend at `http://localhost:8000`
+- MLflow UI at `http://localhost:5001`
+
 ## Usage
 
 ### Ingestion

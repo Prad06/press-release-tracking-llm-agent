@@ -7,6 +7,7 @@ const LINKS: { path: string; label: string }[] = [
   { path: "/agent-space", label: "Agent Space" },
   { path: "/chat", label: "Chat" },
 ];
+const MLFLOW_URL = "http://localhost:5001";
 
 export function Navbar() {
   const location = useLocation();
@@ -33,6 +34,16 @@ export function Navbar() {
             {label}
           </Button>
         ))}
+        <Button
+          color="inherit"
+          component="a"
+          href={MLFLOW_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          sx={{ textTransform: "none", fontWeight: 400 }}
+        >
+          MLflow
+        </Button>
       </Toolbar>
     </AppBar>
   );
