@@ -118,7 +118,8 @@ Environment variables used by the app:
 
 - `MLFLOW_TRACKING_ENABLED` (default `1`)
 - `MLFLOW_TRACKING_URI` (example: `http://127.0.0.1:5001`)
-- `MLFLOW_EXPERIMENT_NAME` (default: `pr_flow_ingestion`)
+
+Experiment name is hardcoded in ingestion CLI as `ingestion_flow`.
 
 ## Usage
 

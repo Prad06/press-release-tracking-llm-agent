@@ -13,7 +13,6 @@ MLFLOW_PORT="${MLFLOW_PORT:-5001}"
 
 MLFLOW_BACKEND_STORE_URI="${MLFLOW_BACKEND_STORE_URI:-sqlite:///$ROOT_DIR/mlflow.db}"
 MLFLOW_ARTIFACT_ROOT="${MLFLOW_ARTIFACT_ROOT:-$ROOT_DIR/mlruns}"
-MLFLOW_EXPERIMENT_NAME="${MLFLOW_EXPERIMENT_NAME:-pr_flow_ingestion}"
 
 if [[ -f "$ROOT_DIR/.venv/bin/activate" ]]; then
   # shellcheck disable=SC1091
@@ -38,7 +37,6 @@ fi
 mkdir -p "$MLFLOW_ARTIFACT_ROOT"
 
 export MLFLOW_TRACKING_URI="http://${MLFLOW_HOST}:${MLFLOW_PORT}"
-export MLFLOW_EXPERIMENT_NAME
 
 echo "Starting local stack:"
 echo "  Backend:  http://${API_HOST}:${API_PORT}"

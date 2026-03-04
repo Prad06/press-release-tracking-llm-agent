@@ -5,14 +5,17 @@ from datetime import datetime
 from pathlib import Path
 
 from fastapi import APIRouter, File, HTTPException, UploadFile
+from fastapi.concurrency import run_in_threadpool
 
 from api.schemas import PressReleaseIn
 from pr_flow_agents.ingestion import run_bulk
+from pr_flow_agents.orchestration import IngestionEventOrchestrator
 from pr_flow_agents.storage import save_crawl_to_mongo, MongoStore
 from pr_flow_agents.crawler import crawl_from_link
 from pr_flow_agents.models import PressReleaseLink
 
 router = APIRouter(prefix="/press-releases", tags=["press-releases"])
+orchestrator = IngestionEventOrchestrator()
 
 
 @router.get("")
@@ -50,3 +53,15 @@ async def get_press_release(id: str):
     if not doc:
         raise HTTPException(404, "Not found")
     return doc
+
+
+@router.post("/{id}/extract-events")
+async def extract_events_for_release(id: str):
+    doc = MongoStore().get_by_id(id, projection={"_id": 1})
+    if not doc:
+        raise HTTPException(404, "Not found")
+    try:
+        out = await run_in_threadpool(orchestrator.run, press_release_id=id)
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(500, f"orchestration_failed: {exc}") from exc
+    return {"ok": True, "result": out}

@@ -16,6 +16,7 @@ from pr_flow_agents.graph.ingestion.state import IngestionState
 from pr_flow_agents.logging_utils import configure_logging, get_logger
 
 logger = get_logger(__name__)
+MLFLOW_EXPERIMENT = "ingestion_flow"
 
 
 def _parse_args() -> argparse.Namespace:
@@ -42,12 +43,11 @@ def main() -> None:
             tracking_uri = str(os.getenv("MLFLOW_TRACKING_URI", "")).strip()
             if tracking_uri:
                 mlflow.set_tracking_uri(tracking_uri)
-            experiment_name = "ingestion_flow"
-            mlflow.set_experiment(experiment_name)
+            mlflow.set_experiment(MLFLOW_EXPERIMENT)
             logger.info(
                 "mlflow_tracking_configured tracking_uri=%s experiment=%s",
                 mlflow.get_tracking_uri(),
-                experiment_name,
+                MLFLOW_EXPERIMENT,
             )
         except Exception as exc:  # noqa: BLE001
             mlflow = None
