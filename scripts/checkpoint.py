@@ -17,8 +17,14 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 CHECKPOINTS_DIR = ROOT / "checkpoints"
 
-# Collections to snapshot (from migrations registry)
-COLLECTIONS = ["crawl_results", "companies"]
+# Collections to snapshot/restore for local pipeline state.
+COLLECTIONS = [
+    "crawl_results",
+    "companies",
+    "extracted_events",
+    "linked_events",
+    "thread_scratchpads",
+]
 
 
 def _sanitize_name(name: str) -> str:

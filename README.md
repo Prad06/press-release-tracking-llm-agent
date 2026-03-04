@@ -5,14 +5,19 @@ Press release crawler and analysis pipeline using LLM agents. It ingests press r
 ## Features
 
 - **Crawler** – Crawl press release URLs and extract markdown content via crawl4ai
-- **Storage** – MongoDB for `crawl_results` and `companies` with migrations
+- **Storage** – MongoDB for `crawl_results`, `companies`, and `extracted_events` with migrations
+- **Gold Storage** – MongoDB `linked_events` and `thread_scratchpads` for linker output/cache
 - **API** – FastAPI endpoints for companies and press releases (single + bulk CSV upload)
 - **Ingestion Graph (Stage 2)** – Iterative extractor/reviewer flow with:
   - Sector routing (`biotech`, `aviation`)
   - LLM extractor prompt
   - LLM validator prompt
   - Multi-expert review loop with hop budget
-- **MLflow Tracking** – Optional per-run and per-LLM-call tracking (latency, prompt/output artifacts, counts)
+- **Orchestration Layer** – Runs ingestion graph and persists final events with linkage:
+  - `press_release_id` and company linkage (`company_ticker`, `company_id`)
+  - Derived `fiscal_year` and `fiscal_quarter` from release timestamp
+- **Linker Graph** – Candidate retrieval + LLM action decision (`NEW | DUPLICATE | UPDATE | RETRACT`) + deterministic apply
+- **MLflow Tracking** – Optional single-run tracing for orchestrator (ingestion graph + persistence + linker graph) and LLM spans
 - **Frontend** – React + TypeScript + MUI app with:
   - **Ingestion** – Add companies and press releases (forms + CSV upload)
   - **Release Space** – File-browser view: companies → releases → content
@@ -119,7 +124,10 @@ Environment variables used by the app:
 - `MLFLOW_TRACKING_ENABLED` (default `1`)
 - `MLFLOW_TRACKING_URI` (example: `http://127.0.0.1:5001`)
 
-Experiment name is hardcoded in ingestion CLI as `ingestion_flow`.
+Experiment names are hardcoded:
+
+- `ingestion_flow` for ingestion/orchestrator
+- `linker_flow` for linker CLI
 
 ## Usage
 
@@ -144,6 +152,36 @@ python -m pr_flow_agents.graph.ingestion.run --press-release-id <mongo_id>
 
 Output includes loop status and final extracted events.
 
+### Event Persistence Orchestrator (CLI)
+
+Run ingestion + silver persistence + linker in one flow:
+
+```bash
+python -m pr_flow_agents.orchestration.ingestion_event_orchestrator --press-release-id <mongo_id>
+```
+
+This writes:
+
+- Silver events into `extracted_events`
+- Gold linked events into `linked_events`
+- Thread context cache into `thread_scratchpads`
+
+### Linker Graph Run (CLI)
+
+Run linker only for one release (expects silver events already present):
+
+```bash
+python -m pr_flow_agents.graph.linker.run --press-release-id <mongo_id> --ticker <TICKER> --sector <biotech|aviation>
+```
+
+### Extract Events API
+
+Trigger event extraction + persistence from release id:
+
+```bash
+POST /press-releases/{id}/extract-events
+```
+
 ### Checkpoints
 
 ```bash
@@ -162,16 +200,20 @@ pr_flow_agents/
 ├── scripts/start_local_stack.sh
 ├── frontend/               # React + MUI
 ├── data/                   # Sample CSV data
-├── pr_flow_agents/         # Crawler, ingestion, graph, storage, models
+├── pr_flow_agents/         # Crawler, ingestion, graph, orchestration, storage, models
 │   ├── crawler.py
 │   ├── scrapper.py
 │   ├── graph/
 │   │   ├── ingestion/
-│   │   └── ...
+│   │   └── linker/
+│   ├── orchestration/
 │   ├── llm/
 │   ├── models.py
 │   └── storage/
 │       ├── mongo_store.py
+│       ├── extracted_event_store.py
+│       ├── linked_event_store.py
+│       ├── thread_scratchpad_store.py
 │       ├── company_store.py
 │       ├── config.py
 │       └── migrations/
