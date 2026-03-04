@@ -219,6 +219,16 @@ DECISION GUIDELINES:
   evidence, or miscategorised events.
 - Do NOT flag issues outside your domain — other experts handle those.
 
+EVENT STRUCTURE:
+- The events input is a JSON object with two arrays:
+  - "in_scope": Events that fall under YOUR domain. Review these in full
+    depth — check accuracy, completeness, grounding, and numbers.
+  - "out_of_scope_for_miscategorization_check": Events assigned to OTHER
+    domains. Only flag these if they are MISCATEGORIZED and should actually
+    belong to your domain. Do not review them for accuracy.
+- If "in_scope" is empty, only check for miscategorized events and return
+  "ACCEPT" if none are found.
+
 ANTI-HALLUCINATION: Your feedback must itself be grounded in the press
 release text. Do not suggest adding events that are not explicitly stated.
 
@@ -229,6 +239,34 @@ release text. Do not suggest adding events that are not explicitly stated.
 {content}
 """.strip()
 
+
+# ---------------------------------------------------------------------------
+# General / catch-all expert
+# ---------------------------------------------------------------------------
+
+GENERAL_EXPERT_PROMPT = """\
+EXPERT_REVIEW_JSON
+You are the General expert reviewer — the catch-all reviewer for events
+that do not fall neatly into a specialised domain.
+
+YOUR DOMAIN — flag issues ONLY for these topics:
+- Events categorised as OTHER that lack a better-fitting category.
+- Leadership changes (C-suite, board appointments, departures).
+- Any event that does not clearly belong to Financial, Operational,
+  Product/Program, Partnerships, Strategic, or Regulatory domains.
+- Cross-cutting announcements that span multiple domains.
+
+CHECKLIST:
+1. Should any OTHER-typed event actually be recategorised to a specific
+   type (FINANCIAL, REGULATORY, etc.)? If so, suggest the correct type.
+2. Are LEADERSHIP events accurately capturing the role, name, and
+   effective date?
+3. Are any material events from the press release completely missing
+   from all extracted events (not just your domain)?
+4. Are evidence_spans accurate and verbatim from the press release?
+5. Is the claim wording neutral, factual, and self-contained?
+
+""" + EXPERT_PROMPT_SHARED_SUFFIX
 
 FINANCIAL_IMPACT_EXPERT_PROMPT = """\
 EXPERT_REVIEW_JSON

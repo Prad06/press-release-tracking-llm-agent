@@ -14,6 +14,20 @@ from pr_flow_agents.logging_utils import get_logger
 
 logger = get_logger(__name__)
 
+try:
+    import mlflow
+except Exception:
+    mlflow = None
+
+
+def _trace(span_type: str = "UNKNOWN"):
+    """Apply @mlflow.trace only when mlflow is available and has an active run."""
+    def decorator(fn):
+        if mlflow is not None:
+            return mlflow.trace(span_type=span_type)(fn)
+        return fn
+    return decorator
+
 
 class GeminiClient:
     """Thin wrapper around google-genai with debug logging."""
@@ -24,6 +38,7 @@ class GeminiClient:
             raise RuntimeError("GEMINI_API_KEY is not set")
         self._client = genai.Client(api_key=key)
 
+    @_trace(span_type="LLM")
     def generate_text(self, prompt: str, model: str = "gemini-2.5-flash") -> str:
         logger.debug(
             "gemini_generate_text_start model=%s prompt_chars=%s",
@@ -43,6 +58,7 @@ class GeminiClient:
         )
         return text
 
+    @_trace(span_type="LLM")
     def generate_json(
         self,
         prompt: str,

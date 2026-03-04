@@ -56,6 +56,3 @@ class IngestionState(TypedDict, total=False):
 
     # Generic diagnostics
     error: Optional[str]
-
-    # Observability
-    mlflow_run_id: Optional[str]
