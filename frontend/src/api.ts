@@ -9,7 +9,6 @@ export type PressRelease = {
   source_url: string;
   press_release_timestamp: string;
   crawl_timestamp: string;
-  unprocessed: boolean;
   raw_result?: {
     source_url: string;
     markdown_content: string;

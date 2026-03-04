@@ -1,9 +1,6 @@
 import { useState } from "react";
 import {
   Box,
-  Button,
-  ButtonGroup,
-  Chip,
   CircularProgress,
   List,
   ListItemButton,
@@ -39,30 +36,6 @@ export function ReleaseSpacePage() {
   const handleSelectPr = (pr: PressRelease) => {
     setSelectedPrId(pr._id);
   };
-
-  const handleRunAllTillToday = () => {
-    // TODO: agent pipeline
-    console.log("Run all till today", selected?.ticker, selectedPr?._id);
-  };
-
-  const handleRunOnlyThis = () => {
-    // TODO: agent pipeline
-    console.log("Run only this", selectedPr?._id);
-  };
-
-  // Run all till today: enabled only when all releases before selected (by timestamp) are processed
-  const allPreviousProcessed =
-    !!selectedPr &&
-    pressReleases
-      .filter(
-        (pr) =>
-          new Date(pr.press_release_timestamp) <
-          new Date(selectedPr!.press_release_timestamp),
-      )
-      .every((pr) => !pr.unprocessed);
-  const canRunAllTillToday = !!selectedPr;
-  const canRunOnlyThis =
-    !!selectedPr && allPreviousProcessed && selectedPr.unprocessed;
 
   return (
     <Box
@@ -161,14 +134,6 @@ export function ReleaseSpacePage() {
                             pr.press_release_timestamp,
                           ).toLocaleDateString()}
                         </Typography>
-                        {pr.unprocessed && (
-                          <Chip
-                            label="Unprocessed"
-                            size="small"
-                            color="warning"
-                            sx={{ height: 18, fontSize: "0.7rem" }}
-                          />
-                        )}
                       </Box>
                     }
                   />
@@ -222,29 +187,7 @@ export function ReleaseSpacePage() {
                   >
                     Press date {selectedPr.press_release_timestamp}
                   </Typography>
-                  {selectedPr.unprocessed && (
-                    <Chip label="Unprocessed" color="warning" size="small" />
-                  )}
                 </Box>
-                <ButtonGroup size="small" variant="outlined">
-                  <Button
-                    onClick={handleRunAllTillToday}
-                    disabled={!canRunAllTillToday}
-                    title={
-                      !allPreviousProcessed && selectedPr?.unprocessed
-                        ? "Process all earlier releases first"
-                        : ""
-                    }
-                  >
-                    Run all till today
-                  </Button>
-                  <Button
-                    onClick={handleRunOnlyThis}
-                    disabled={!canRunOnlyThis}
-                  >
-                    Run only this
-                  </Button>
-                </ButtonGroup>
               </Box>
               <Typography
                 component="pre"

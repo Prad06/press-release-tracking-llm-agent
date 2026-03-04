@@ -38,7 +38,6 @@ class MongoStore:
             crawl_timestamp=raw_result.get("timestamp", datetime.now().isoformat()),
             raw_result=raw_result,
             metadata=metadata or {},
-            unprocessed=True,
         )
         inserted = self._client[self._db][COLLECTION].insert_one(
             doc.model_dump(mode="json")

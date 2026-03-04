@@ -40,6 +40,5 @@ class StoredCrawlDocument(BaseModel):
         default_factory=dict,
         description="Optional extra fields (e.g. selection_method, score)",
     )
-    unprocessed: bool = Field(default=True, description="Not yet processed by agents")
 
     model_config = ConfigDict(from_attributes=True)

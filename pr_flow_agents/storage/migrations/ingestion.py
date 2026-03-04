@@ -8,5 +8,4 @@ INDEXES = [
         [("ticker", 1), ("press_release_timestamp", -1)],
     ),
     ("source_url_1", [("source_url", 1)]),
-    ("unprocessed_1", [("unprocessed", 1)]),
 ]
