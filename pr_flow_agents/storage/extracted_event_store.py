@@ -37,6 +37,9 @@ class ExtractedEventStore:
         fiscal_year: int,
         fiscal_quarter: str,
         events: List[Dict[str, Any]],
+        quality_flag: Optional[str] = None,
+        hop_count: Optional[int] = None,
+        loop_status: Optional[str] = None,
     ) -> int:
         coll = self._coll()
         coll.delete_many({"press_release_id": press_release_id})
@@ -61,9 +64,21 @@ class ExtractedEventStore:
                 numbers=[str(x) for x in (event.get("numbers") or []) if str(x).strip()],
                 evidence_span=str(event.get("evidence_span") or ""),
                 confidence=str(event.get("confidence")) if event.get("confidence") is not None else None,
-                event_payload=event,
+                event_payload={
+                    **event,
+                    "quality_flag": quality_flag,
+                    "hop_count": hop_count,
+                    "loop_status": loop_status,
+                },
             )
-            docs.append(model.model_dump(mode="json"))
+            doc = model.model_dump(mode="json")
+            if quality_flag:
+                doc["quality_flag"] = str(quality_flag)
+            if hop_count is not None:
+                doc["hop_count"] = int(hop_count)
+            if loop_status:
+                doc["loop_status"] = str(loop_status)
+            docs.append(doc)
 
         if not docs:
             return 0

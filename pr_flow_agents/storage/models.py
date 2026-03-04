@@ -66,3 +66,36 @@ class ExtractedEventDocument(BaseModel):
     created_at: datetime = Field(default_factory=datetime.utcnow, description="Persist timestamp")
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class LinkedEventDocument(BaseModel):
+    """Gold linked event record."""
+
+    linked_event_id: str = Field(..., description="Stable gold event id")
+    ticker: str = Field(..., description="Company ticker")
+    thread_id: str = Field(..., description="Thread grouping id")
+    event_type: str = Field(..., description="Canonical event type")
+    event_date: Optional[str] = Field(default=None, description="Event date string")
+    canonical_claim: str = Field(..., description="Canonical claim for linked event")
+    status: str = Field(..., description="ACTIVE | SUPERSEDED | RETRACTED")
+    supporting_silver_event_ids: List[str] = Field(default_factory=list, description="Silver evidence ids")
+    supersedes: Optional[str] = Field(default=None, description="Linked event id superseded by this record")
+    superseded_by: Optional[str] = Field(default=None, description="Linked event id that supersedes this record")
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ThreadScratchpadDocument(BaseModel):
+    """Thread summary cache for linker context."""
+
+    ticker: str = Field(..., description="Company ticker")
+    thread_id: str = Field(..., description="Thread id")
+    thread_name: str = Field(..., description="Human-readable thread name")
+    summary: str = Field(default="", description="Optional legacy summary text")
+    latest_linked_event_ids: List[str] = Field(default_factory=list, description="Most recent linked event ids")
+    latest_claims: List[str] = Field(default_factory=list, description="Most recent canonical claims")
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+    model_config = ConfigDict(from_attributes=True)
