@@ -62,6 +62,7 @@ Create a `.env` file in the project root:
 ```
 MONGODB_URI=mongodb://localhost:27017/
 MONGODB_DATABASE=pr_flow
+GEMINI_API_KEY=<gemini-api-key>
 ```
 
 For Atlas, use your connection string. Database defaults to `pr_flow` if `MONGODB_DATABASE` is omitted.
