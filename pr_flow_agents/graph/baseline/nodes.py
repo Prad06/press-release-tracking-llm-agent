@@ -12,6 +12,7 @@ from pr_flow_agents.graph.baseline.prompts import (
 from pr_flow_agents.graph.baseline.state import BaselineState
 from pr_flow_agents.llm import generate_json
 from pr_flow_agents.logging_utils import get_logger
+from pr_flow_agents.storage.baseline_rag_store import BaselineRagStore
 from pr_flow_agents.storage.baseline_summary_store import BaselineSummaryStore
 from pr_flow_agents.storage.mongo_store import MongoStore
 
@@ -207,23 +208,30 @@ def update_summaries(state: BaselineState) -> BaselineState:
     }
 
 
+@_trace(span_type="CHAIN", name="fanout_post_update")
+def fanout_post_update(state: BaselineState) -> BaselineState:
+    """Split work into parallel persistence and RAG ingestion paths."""
+
+    return {}
+
+
 @_trace(span_type="CHAIN", name="persist_summaries")
 def persist_summaries(state: BaselineState) -> BaselineState:
     ticker = str(state.get("ticker") or "").strip().upper()
     press_release_id = str(state.get("press_release_id") or "").strip()
     if not ticker or not press_release_id:
-        return {**state, "status": "ERROR", "error": "missing_ticker_or_press_release_id"}
+        return {"status": "ERROR", "error": "missing_ticker_or_press_release_id"}
 
     ts_raw = str(state.get("press_release_timestamp") or "")
     try:
         release_ts = datetime.fromisoformat(ts_raw.replace("Z", "+00:00"))
     except Exception as exc:  # noqa: BLE001
-        return {**state, "status": "ERROR", "error": f"invalid_press_release_timestamp: {exc}"}
+        return {"status": "ERROR", "error": f"invalid_press_release_timestamp: {exc}"}
 
     fiscal_year = int(state.get("fiscal_year") or 0)
     fiscal_quarter = str(state.get("fiscal_quarter") or "").upper()
     if fiscal_year <= 0 or fiscal_quarter not in {"Q1", "Q2", "Q3", "Q4"}:
-        return {**state, "status": "ERROR", "error": "invalid_fiscal_context"}
+        return {"status": "ERROR", "error": "invalid_fiscal_context"}
 
     store = BaselineSummaryStore()
     company_doc = store.upsert_company_summary(
@@ -248,11 +256,75 @@ def persist_summaries(state: BaselineState) -> BaselineState:
         fiscal_quarter,
     )
     return {
-        **state,
         "company_summary_doc": company_doc,
         "quarterly_summary_doc": quarter_doc,
         "status": "DONE",
+        "error": None,
     }
+
+
+@_trace(span_type="CHAIN", name="rag_ingest_summaries")
+def rag_ingest_summaries(state: BaselineState) -> BaselineState:
+    ticker = str(state.get("ticker") or "").strip().upper()
+    press_release_id = str(state.get("press_release_id") or "").strip()
+    press_release_title = str(state.get("press_release_title") or "")
+    press_release_timestamp = str(state.get("press_release_timestamp") or "")
+    fiscal_year = int(state.get("fiscal_year") or 0)
+    fiscal_quarter = str(state.get("fiscal_quarter") or "").upper()
+
+    if not ticker or not press_release_id:
+        return {
+            "rag_ingestion_status": "SKIPPED",
+            "rag_chunk_count": 0,
+            "rag_ingestion_error": "missing_ticker_or_press_release_id",
+        }
+
+    try:
+        store = BaselineRagStore()
+        company_chunks = store.ingest_release_summary(
+            ticker=ticker,
+            press_release_id=press_release_id,
+            press_release_title=press_release_title,
+            press_release_timestamp=press_release_timestamp,
+            summary_scope="COMPANY",
+            summary_text=str(state.get("company_summary") or ""),
+        )
+        quarterly_chunks = store.ingest_release_summary(
+            ticker=ticker,
+            press_release_id=press_release_id,
+            press_release_title=press_release_title,
+            press_release_timestamp=press_release_timestamp,
+            summary_scope="QUARTERLY",
+            summary_text=str(state.get("quarterly_summary") or ""),
+            fiscal_year=fiscal_year if fiscal_year > 0 else None,
+            fiscal_quarter=fiscal_quarter if fiscal_quarter in {"Q1", "Q2", "Q3", "Q4"} else None,
+        )
+        total_chunks = int(company_chunks + quarterly_chunks)
+        status = "DONE" if total_chunks > 0 else "SKIPPED"
+        logger.info(
+            "baseline_rag_ingest_done ticker=%s release=%s chunks=%s",
+            ticker,
+            press_release_id,
+            total_chunks,
+        )
+        if _mlflow_enabled():
+            mlflow.log_param("baseline_rag_ingestion_status", status)
+            mlflow.log_metric("baseline_rag_chunk_count", float(total_chunks))
+        return {
+            "rag_ingestion_status": status,
+            "rag_chunk_count": total_chunks,
+            "rag_ingestion_error": None,
+        }
+    except Exception as exc:  # noqa: BLE001
+        logger.exception("baseline_rag_ingest_failed")
+        if _mlflow_enabled():
+            mlflow.log_param("baseline_rag_ingestion_status", "ERROR")
+            mlflow.log_metric("baseline_rag_has_error", 1.0)
+        return {
+            "rag_ingestion_status": "ERROR",
+            "rag_chunk_count": 0,
+            "rag_ingestion_error": str(exc),
+        }
 
 
 @_trace(span_type="CHAIN", name="finalize_output")
@@ -268,6 +340,9 @@ def finalize_output(state: BaselineState) -> BaselineState:
         "change_notes": str(state.get("change_notes") or ""),
         "company_summary_id": (state.get("company_summary_doc") or {}).get("summary_id"),
         "quarterly_summary_id": (state.get("quarterly_summary_doc") or {}).get("summary_id"),
+        "rag_ingestion_status": str(state.get("rag_ingestion_status") or ""),
+        "rag_chunk_count": int(state.get("rag_chunk_count") or 0),
+        "rag_ingestion_error": str(state.get("rag_ingestion_error") or ""),
         "error": state.get("error"),
     }
     if _mlflow_enabled():

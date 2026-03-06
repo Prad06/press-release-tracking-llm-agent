@@ -9,3 +9,4 @@ langgraph
 google-genai
 pytest
 mlflow
+chromadb>=0.5.0

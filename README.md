@@ -21,6 +21,10 @@ Press release crawler and analysis pipeline using LLM agents. It ingests press r
   - Company-wide rolling summary (`BEAM:COMPANY` style ids)
   - Quarterly summary (`BEAM:QUARTERLY:YYYY:QX` style ids)
   - Uses time precedence: newer releases override older conflicting facts
+  - Runs parallel RAG ingestion to Chroma from updated summaries (chunked)
+- **RAG Ingestion Store** – ChromaDB persistent collection for baseline summary chunks
+  - Chunked documents are keyed by `press_release_id`, `summary_scope`, and `chunk_index`
+  - Metadata includes ticker, release timestamp, scope, and fiscal context
 - **MLflow Tracking** – Optional single-run tracing for orchestrator (ingestion graph + persistence + linker graph) and LLM spans
 - **Frontend** – React + TypeScript + MUI app with:
   - **Ingestion** – Add companies and press releases (forms + CSV upload)
@@ -63,6 +67,8 @@ Create a `.env` file in the project root:
 MONGODB_URI=mongodb://localhost:27017/
 MONGODB_DATABASE=pr_flow
 GEMINI_API_KEY=<gemini-api-key>
+CHROMA_PERSIST_DIRECTORY=checkpoints/chroma
+CHROMA_BASELINE_COLLECTION=baseline_summary_chunks
 ```
 
 For Atlas, use your connection string. Database defaults to `pr_flow` if `MONGODB_DATABASE` is omitted.
@@ -192,6 +198,13 @@ This updates/creates:
 
 - Company summary in `baseline_summaries` (`scope=COMPANY`)
 - Quarterly summary in `baseline_summaries` (`scope=QUARTERLY`)
+- Chunked company + quarterly summary records in Chroma collection (`baseline_summary_chunks` by default)
+
+The baseline result payload also includes:
+
+- `rag_ingestion_status` (`DONE | SKIPPED | ERROR`)
+- `rag_chunk_count`
+- `rag_ingestion_error`
 
 ### Extract Events API
 
@@ -220,6 +233,8 @@ python scripts/checkpoint.py restore <name>  # Restore to checkpoint
 Checkpoint snapshots include:
 `crawl_results`, `companies`, `extracted_events`, `linked_events`, `thread_scratchpads`, `baseline_summaries`.
 
+Note: Chroma data is file-based under `CHROMA_PERSIST_DIRECTORY` (default `checkpoints/chroma`) and is not included in MongoDB checkpoints.
+
 ## Project Layout
 
 ```
@@ -246,6 +261,7 @@ pr_flow_agents/
 │       ├── linked_event_store.py
 │       ├── thread_scratchpad_store.py
 │       ├── company_store.py
+│       ├── baseline_rag_store.py
 │       ├── config.py
 │       └── migrations/
 └── requirements.txt

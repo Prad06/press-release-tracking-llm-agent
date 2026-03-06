@@ -35,6 +35,11 @@ class BaselineState(TypedDict, total=False):
     company_summary_doc: Dict[str, Any]
     quarterly_summary_doc: Dict[str, Any]
 
+    # RAG ingestion outputs
+    rag_ingestion_status: str
+    rag_chunk_count: int
+    rag_ingestion_error: Optional[str]
+
     # Final
     status: BaselineStatus
     result: Dict[str, Any]

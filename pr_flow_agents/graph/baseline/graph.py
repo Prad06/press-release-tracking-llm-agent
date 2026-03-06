@@ -15,7 +15,9 @@ def build_graph():
     builder.add_node("derive_fiscal_context", nodes.derive_fiscal_context)
     builder.add_node("load_existing_summaries", nodes.load_existing_summaries)
     builder.add_node("update_summaries", nodes.update_summaries)
+    builder.add_node("fanout_post_update", nodes.fanout_post_update)
     builder.add_node("persist_summaries", nodes.persist_summaries)
+    builder.add_node("rag_ingest_summaries", nodes.rag_ingest_summaries)
     builder.add_node("finalize_output", nodes.finalize_output)
 
     builder.set_entry_point("load_press_release")
@@ -27,7 +29,7 @@ def build_graph():
         return "finalize_output" if state.get("error") else "load_existing_summaries"
 
     def _after_update(state: BaselineState) -> str:
-        return "finalize_output" if state.get("error") else "persist_summaries"
+        return "finalize_output" if state.get("error") else "fanout_post_update"
 
     builder.add_conditional_edges(
         "load_press_release",
@@ -50,11 +52,14 @@ def build_graph():
         "update_summaries",
         _after_update,
         {
-            "persist_summaries": "persist_summaries",
+            "fanout_post_update": "fanout_post_update",
             "finalize_output": "finalize_output",
         },
     )
+    builder.add_edge("fanout_post_update", "persist_summaries")
+    builder.add_edge("fanout_post_update", "rag_ingest_summaries")
     builder.add_edge("persist_summaries", "finalize_output")
+    builder.add_edge("rag_ingest_summaries", "finalize_output")
     builder.add_edge("finalize_output", END)
 
     return builder.compile()
