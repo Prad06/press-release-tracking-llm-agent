@@ -99,3 +99,21 @@ class ThreadScratchpadDocument(BaseModel):
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class BaselineSummaryDocument(BaseModel):
+    """Baseline summary state used by the alternative pipeline."""
+
+    summary_id: str = Field(..., description="Stable id for one summary record")
+    ticker: str = Field(..., description="Company ticker")
+    scope: str = Field(..., description="COMPANY or QUARTERLY")
+    fiscal_year: Optional[int] = Field(default=None, description="Fiscal year for quarterly summary")
+    fiscal_quarter: Optional[str] = Field(default=None, description="Fiscal quarter for quarterly summary")
+    summary_text: str = Field(default="", description="Current baseline summary text")
+    last_release_id: str = Field(..., description="Most recent press release id that updated this summary")
+    last_release_timestamp: datetime = Field(..., description="Timestamp of most recent update")
+    source_release_ids: List[str] = Field(default_factory=list, description="All release ids used for this summary")
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+    model_config = ConfigDict(from_attributes=True)

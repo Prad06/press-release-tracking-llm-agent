@@ -8,12 +8,14 @@ REGISTRY: dict[str, list] = {}
 from pr_flow_agents.storage.migrations import ingestion, companies
 from pr_flow_agents.storage.migrations import extracted_events
 from pr_flow_agents.storage.migrations import linked_events, thread_scratchpads
+from pr_flow_agents.storage.migrations import baseline_summaries
 
 REGISTRY[ingestion.COLLECTION] = ingestion.INDEXES
 REGISTRY[companies.COLLECTION] = companies.INDEXES
 REGISTRY[extracted_events.COLLECTION] = extracted_events.INDEXES
 REGISTRY[linked_events.COLLECTION] = linked_events.INDEXES
 REGISTRY[thread_scratchpads.COLLECTION] = thread_scratchpads.INDEXES
+REGISTRY[baseline_summaries.COLLECTION] = baseline_summaries.INDEXES
 
 
 def run_all(uri: str, database: str) -> None:

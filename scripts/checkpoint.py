@@ -24,6 +24,7 @@ COLLECTIONS = [
     "extracted_events",
     "linked_events",
     "thread_scratchpads",
+    "baseline_summaries",
 ]
 
 

@@ -5,7 +5,7 @@ Press release crawler and analysis pipeline using LLM agents. It ingests press r
 ## Features
 
 - **Crawler** – Crawl press release URLs and extract markdown content via crawl4ai
-- **Storage** – MongoDB for `crawl_results`, `companies`, and `extracted_events` with migrations
+- **Storage** – MongoDB for `crawl_results`, `companies`, `extracted_events`, and `baseline_summaries` with migrations
 - **Gold Storage** – MongoDB `linked_events` and `thread_scratchpads` for linker output/cache
 - **API** – FastAPI endpoints for companies and press releases (single + bulk CSV upload)
 - **Ingestion Graph (Stage 2)** – Iterative extractor/reviewer flow with:
@@ -17,6 +17,10 @@ Press release crawler and analysis pipeline using LLM agents. It ingests press r
   - `press_release_id` and company linkage (`company_ticker`, `company_id`)
   - Derived `fiscal_year` and `fiscal_quarter` from release timestamp
 - **Linker Graph** – Candidate retrieval + LLM action decision (`NEW | DUPLICATE | UPDATE | RETRACT`) + deterministic apply
+- **Baseline Graph** – Alternative pipeline that updates:
+  - Company-wide rolling summary (`BEAM:COMPANY` style ids)
+  - Quarterly summary (`BEAM:QUARTERLY:YYYY:QX` style ids)
+  - Uses time precedence: newer releases override older conflicting facts
 - **MLflow Tracking** – Optional single-run tracing for orchestrator (ingestion graph + persistence + linker graph) and LLM spans
 - **Frontend** – React + TypeScript + MUI app with:
   - **Ingestion** – Add companies and press releases (forms + CSV upload)
@@ -128,6 +132,7 @@ Experiment names are hardcoded:
 
 - `ingestion_flow` for ingestion/orchestrator
 - `linker_flow` for linker CLI
+- `baseline_flow` for baseline graph/orchestrator
 
 ## Usage
 
@@ -174,12 +179,33 @@ Run linker only for one release (expects silver events already present):
 python -m pr_flow_agents.graph.linker.run --press-release-id <mongo_id> --ticker <TICKER> --sector <biotech|aviation>
 ```
 
+### Baseline Graph Run (CLI)
+
+Run baseline summary graph for one release:
+
+```bash
+python -m pr_flow_agents.graph.baseline.run --press-release-id <mongo_id>
+```
+
+This updates/creates:
+
+- Company summary in `baseline_summaries` (`scope=COMPANY`)
+- Quarterly summary in `baseline_summaries` (`scope=QUARTERLY`)
+
 ### Extract Events API
 
 Trigger event extraction + persistence from release id:
 
 ```bash
 POST /press-releases/{id}/extract-events
+```
+
+### Baseline Summary API
+
+Trigger baseline summary update from release id:
+
+```bash
+POST /press-releases/{id}/baseline-summary
 ```
 
 ### Checkpoints
@@ -189,6 +215,9 @@ python scripts/checkpoint.py create <name>   # Save current DB state
 python scripts/checkpoint.py list            # List checkpoints
 python scripts/checkpoint.py restore <name>  # Restore to checkpoint
 ```
+
+Checkpoint snapshots include:
+`crawl_results`, `companies`, `extracted_events`, `linked_events`, `thread_scratchpads`, `baseline_summaries`.
 
 ## Project Layout
 
@@ -205,6 +234,7 @@ pr_flow_agents/
 │   ├── scrapper.py
 │   ├── graph/
 │   │   ├── ingestion/
+│   │   ├── baseline/
 │   │   └── linker/
 │   ├── orchestration/
 │   ├── llm/
