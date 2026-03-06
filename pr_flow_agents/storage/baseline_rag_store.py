@@ -80,8 +80,10 @@ class BaselineRagStore:
 
         collection = self._get_collection()
         where = {
-            "press_release_id": str(press_release_id),
-            "summary_scope": scope,
+            "$and": [
+                {"press_release_id": {"$eq": str(press_release_id)}},
+                {"summary_scope": {"$eq": scope}},
+            ]
         }
         collection.delete(where=where)
 
