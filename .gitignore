@@ -32,3 +32,6 @@ Thumbs.db
 # MLflow local artifacts
 mlflow.db
 mlruns/
+
+# Report
+report/
