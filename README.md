@@ -97,11 +97,13 @@ python main.py
 ```
 
 This starts:
+
 - Frontend at `http://localhost:5173`
 - Backend at `http://localhost:8000`
 - MLflow UI at `http://localhost:5001`
 
 Logs:
+
 - `/tmp/pr_flow_frontend.log`
 - `/tmp/pr_flow_backend.log`
 - `/tmp/pr_flow_mlflow.log`
