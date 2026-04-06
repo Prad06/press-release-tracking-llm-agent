@@ -31,20 +31,24 @@ COLLECTIONS = [
 def _sanitize_name(name: str) -> str:
     """Allow alphanumeric, hyphens, underscores."""
     if not name or not re.match(r"^[a-zA-Z0-9_-]+$", name):
-        raise ValueError(f"Checkpoint name must be alphanumeric, hyphens, underscores: {name!r}")
+        raise ValueError(
+            f"Checkpoint name must be alphanumeric, hyphens, underscores: {name!r}"
+        )
     return name
 
 
 def _load_env():
     from dotenv import load_dotenv
+
     load_dotenv(ROOT / ".env")
 
 
 def create_checkpoint(name: str) -> None:
     _load_env()
-    from pr_flow_agents.storage.config import get_database, get_uri
     import pymongo
     from bson import json_util
+
+    from pr_flow_agents.storage.config import get_database, get_uri
 
     name = _sanitize_name(name)
     out_dir = CHECKPOINTS_DIR / name
@@ -69,7 +73,9 @@ def create_checkpoint(name: str) -> None:
 
 def list_checkpoints() -> None:
     if not CHECKPOINTS_DIR.exists():
-        print("No checkpoints yet. Create one with: python scripts/checkpoint.py create <name>")
+        print(
+            "No checkpoints yet. Create one with: python scripts/checkpoint.py create <name>"
+        )
         return
     dirs = sorted(d for d in CHECKPOINTS_DIR.iterdir() if d.is_dir())
     if not dirs:
@@ -82,9 +88,10 @@ def list_checkpoints() -> None:
 
 def restore_checkpoint(name: str) -> None:
     _load_env()
-    from pr_flow_agents.storage.config import get_database, get_uri
     import pymongo
     from bson import json_util
+
+    from pr_flow_agents.storage.config import get_database, get_uri
 
     name = _sanitize_name(name)
     out_dir = CHECKPOINTS_DIR / name
